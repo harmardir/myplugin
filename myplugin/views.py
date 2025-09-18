@@ -1,5 +1,5 @@
-from django.shortcuts import render
+from openedx.core.djangoapps.plugin_api.views import render_to_mako
 
 def hello_world(request):
     context = {"message": "Hello from MyPlugin (HTML)!"}
-    return render(request, "myplugin/hello.html", context)
+    return render_to_mako("myplugin/hello.html", context)
