@@ -1,8 +1,6 @@
 from django.urls import path
 from . import views
 
-app_name = "myplugin"
-
 urlpatterns = [
-    path("units/", views.list_units, name="units"),
+    path("unit/<path:usage_key_str>/", views.render_unit, name="render_unit"),
 ]
