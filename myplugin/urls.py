@@ -5,4 +5,5 @@ app_name = "myplugin"
 
 urlpatterns = [
     path("", views.hello_world, name="hello"),
+    path("units/", views.list_units, name="units"),
 ]
