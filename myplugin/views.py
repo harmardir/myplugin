@@ -1,3 +1,5 @@
+from django.urls import reverse
+from lms.djangoapps.courseware.views.views import unit as courseware_unit_view
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from opaque_keys.edx.keys import UsageKey
@@ -36,8 +38,8 @@ def render_unit(request, usage_key_str):
     store = modulestore()
     unit = get_object_or_404(store, usage_key)
 
-    # Use the old courseware view helper
-    from lms.djangoapps.courseware.views.views import unit as courseware_unit_view
+  
+
 
     # Call the legacy unit renderer
     return courseware_unit_view(request, usage_key.course_key, usage_key)
