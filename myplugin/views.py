@@ -1,8 +1,7 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404
-from common.djangoapps.edxmako.shortcuts import render_to_response
-from opaque_keys.edx.keys import UsageKey
+from django.urls import reverse
 from xmodule.modulestore.django import modulestore
+from common.djangoapps.edxmako.shortcuts import render_to_response
 
 @login_required
 def units_list(request):
@@ -20,12 +19,12 @@ def units_list(request):
                 unit_dict = {
                     "id": str(block.location),
                     "display_name": getattr(block, "display_name", str(block.location)),
+                    "url": reverse("myplugin:render_unit", args=[str(block.location)]),  # ✅ build URL here
                 }
                 course_dict["units"].append(unit_dict)
         courses.append(course_dict)
 
     return render_to_response("myplugin/units.html", {"courses": courses})
-
 
 @login_required
 def render_unit(request, usage_key_str):
