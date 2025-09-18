@@ -1,45 +1,51 @@
-from django.urls import reverse
-from lms.djangoapps.courseware.views.views import unit as courseware_unit_view
-from django.contrib.auth.decorators import login_required
-from django.http import Http404
-from opaque_keys.edx.keys import UsageKey
-from xmodule.modulestore.django import modulestore
-from common.djangoapps.edxmako.shortcuts import render_to_response
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from rest_framework.test import APIRequestFactory
+from lms.djangoapps.courseware_api.views import CourseViewSet, BlocksViewSet
 
-@login_required
-def units_list(request):
-    store = modulestore()
+
+def courses_and_units_view(request):
+    """
+    Fetch all courses and their units using the Courseware API,
+    then render with a Mako template.
+    """
+    factory = APIRequestFactory()
+
+    # Call Course API to get all enrolled courses
+    course_api_req = factory.get("/api/courseware/course/")
+    course_response = CourseViewSet.as_view({"get": "list"})(course_api_req)
+
     courses = []
+    for course in course_response.data.get("results", []):
+        course_id = course["id"]
 
-    for course in store.get_courses():
-        course_dict = {
-            "id": str(course.id),
-            "display_name": getattr(course, "display_name", str(course.id)),
-            "units": []
-        }
-        for block in store.get_items(course.id):
-            if getattr(block.location, "category", None) == "vertical":
-                unit_dict = {
-                    "id": str(block.location),
-                    "display_name": getattr(block, "display_name", str(block.location)),
-                    "url": reverse("myplugin:render_unit", args=[str(block.location)]),  # ✅ build URL here
-                }
-                course_dict["units"].append(unit_dict)
-        courses.append(course_dict)
+        # Call Blocks API to get blocks for this course
+        blocks_req = factory.get(f"/api/courseware/blocks/?course_id={course_id}&all_blocks=true")
+        blocks_response = BlocksViewSet.as_view({"get": "list"})(blocks_req)
 
-    return render_to_response("myplugin/units.html", {"courses": courses})
+        blocks_data = blocks_response.data.get("blocks", {})
 
-@login_required
-def render_unit(request, usage_key_str):
-    """
-    Render a unit (vertical block) using legacy courseware rendering.
-    """
-    usage_key = UsageKey.from_string(usage_key_str)
-    store = modulestore()
-    unit = get_object_or_404(store, usage_key)
+        # Filter units (sequences typically)
+        units = [
+            {
+                "id": blk_id,
+                "display_name": blk.get("display_name", "Untitled"),
+                "url": f"/myplugin/unit/{blk_id}/",
+            }
+            for blk_id, blk in blocks_data.items()
+            if blk.get("type") == "sequential"
+        ]
 
-  
+        courses.append({
+            "id": course_id,
+            "display_name": course["display"],
+            "units": units,
+        })
 
+    context = {"courses": courses}
 
-    # Call the legacy unit renderer
-    return courseware_unit_view(request, usage_key.course_key, usage_key)
+    return render_to_response(
+        "myplugin/courses_and_units.html",
+        context,
+        context_instance=RequestContext(request),
+    )
