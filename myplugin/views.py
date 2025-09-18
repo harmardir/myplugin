@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse
+from django.http import Http404
+from opaque_keys.edx.keys import UsageKey
 from xmodule.modulestore.django import modulestore
 from common.djangoapps.edxmako.shortcuts import render_to_response
 
