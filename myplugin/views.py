@@ -5,8 +5,10 @@ def unit_grid(request):
     store = modulestore()
     units = []
 
-    # ⚡ Use get_course_keys() instead of get_courses()
-    for course_key in store.get_course_keys():
+    # get_courses returns CourseBlockWithMixins objects
+    for course in store.get_courses(read_only=True):
+        course_key = course.id  # ⚡ this is a CourseLocator
+
         for locator in store.get_items(course_key):
             block = store.get_item(locator)
             if block.category == "vertical":
@@ -22,7 +24,6 @@ def unit_grid(request):
                     })
 
     return render(request, "myplugin/unit_grid.html", {"units": units})
-
 
 
 
