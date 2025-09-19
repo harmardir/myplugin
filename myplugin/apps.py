@@ -9,7 +9,7 @@ class MyPluginConfig(AppConfig):
         PluginURLs.CONFIG: {
             "lms.djangoapp": {
                 PluginURLs.NAMESPACE: "myplugin",
-                PluginURLs.REGEX: r"^api/myplugin/",
+                PluginURLs.REGEX: r"^myplugin/",
                 PluginURLs.RELATIVE_PATH: "urls",
             },
         },
