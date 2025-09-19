@@ -47,7 +47,6 @@ def unit_grid(request):
 
 
 
-
 def test_template(request):
     """
     Simple view to test template loading.
