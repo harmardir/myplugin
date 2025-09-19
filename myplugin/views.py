@@ -1,12 +1,7 @@
-# myplugin/views.py
 from django.shortcuts import render
 from xmodule.modulestore.django import modulestore
 
 def unit_grid(request):
-    """
-    Display all unit blocks (verticals) for all courses as a grid.
-    Clicking a unit opens it in an iframe inside its parent sequence.
-    """
     store = modulestore()
     all_courses = store.get_courses(read_only=True)
 
@@ -14,21 +9,25 @@ def unit_grid(request):
 
     for course in all_courses:
         course_key = course.id
-        for block in store.get_items(course_key, depth=0):
+
+        # Just call get_items with the course_key
+        blocks = store.get_items(course_key)
+
+        for block in blocks:
             # Only verticals
             if block.category == "vertical":
-                # parent is sequence or chapter
-                parent = block.parent  # should exist in Teak
+                parent = getattr(block, 'parent', None)
                 parent_id = str(parent) if parent else str(course_key)
-                
+
                 units.append({
                     "course_id": str(course_key),
                     "unit_id": str(block.location),
-                    "unit_name": block.display_name or "Untitled Unit",
+                    "unit_name": getattr(block, 'display_name', "Untitled Unit"),
                     "parent_id": parent_id,
                 })
 
     return render(request, "myplugin/unit_grid.html", {"units": units})
+
 
 
 
