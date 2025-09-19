@@ -1,14 +1,12 @@
 from django.shortcuts import render
 from xmodule.modulestore.django import modulestore
-from opaque_keys.edx.keys import CourseKey
 
 def unit_grid(request):
     store = modulestore()
     units = []
 
-    for course in store.get_courses():
-        # convert CourseLocator to CourseKey
-        course_key = CourseKey.from_string(str(course))  # ⚡ important
+    # ⚡ Use get_course_keys() instead of get_courses()
+    for course_key in store.get_course_keys():
         for locator in store.get_items(course_key):
             block = store.get_item(locator)
             if block.category == "vertical":
@@ -18,12 +16,13 @@ def unit_grid(request):
                 if chapter and sequential:
                     path = f"{chapter.location}/{sequential.location}/{block.location}"
                     units.append({
-                        "course": str(course),  # for URLs
+                        "course": str(course_key),  # for URLs
                         "name": block.display_name or "Untitled Unit",
-                        "url": f"/courses/{str(course)}/courseware/{path}/"
+                        "url": f"/courses/{str(course_key)}/courseware/{path}/"
                     })
 
     return render(request, "myplugin/unit_grid.html", {"units": units})
+
 
 
 
