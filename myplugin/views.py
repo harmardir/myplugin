@@ -6,24 +6,26 @@ def unit_grid(request):
     store = modulestore()
     units = []
 
+    # get_courses() returns CourseLocator objects
     for course in store.get_courses():
-        course_id = str(course)  # This is the course key for URLs
-
+        # Pass course (CourseLocator) directly to get_items()
         for locator in store.get_items(course):
             block = store.get_item(locator)
             if block.category == "vertical":
+                # Get parent sequential and chapter safely
                 sequential = store.get_item(block.parent) if block.parent else None
                 chapter = store.get_item(sequential.parent) if sequential and sequential.parent else None
 
                 if chapter and sequential:
                     path = f"{chapter.location}/{sequential.location}/{block.location}"
                     units.append({
-                        "course": course_id,
+                        "course": str(course),  # course key as string for URLs
                         "name": block.display_name or "Untitled Unit",
-                        "url": f"/courses/{course_id}/courseware/{path}/"
+                        "url": f"/courses/{str(course)}/courseware/{path}/"
                     })
 
     return render(request, "myplugin/unit_grid.html", {"units": units})
+
 
 
 
