@@ -7,7 +7,9 @@ def unit_grid(request):
     units = []
 
     for course in store.get_courses():
-        course_id = str(course.id)  # use this for URLs
+        course_id = str(course.id)  # correct course ID for URLs
+        course_key = course.id.to_deprecated_string()  # "course-v1:OpenedX+DemoX+DemoCourse"
+
         for locator in store.get_items(course.id):
             block = store.get_item(locator)
             if block.category == "vertical":
@@ -23,6 +25,7 @@ def unit_grid(request):
                     })
 
     return render(request, "myplugin/unit_grid.html", {"units": units})
+
 
 
 def test_template(request):
