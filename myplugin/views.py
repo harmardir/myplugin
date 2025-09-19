@@ -7,10 +7,9 @@ def unit_grid(request):
     units = []
 
     for course in store.get_courses():
-        course_id = str(course.id)  # correct course ID for URLs
-        course_key = course.id.to_deprecated_string()  # "course-v1:OpenedX+DemoX+DemoCourse"
+        course_id = str(course)  # This is the course key for URLs
 
-        for locator in store.get_items(course.id):
+        for locator in store.get_items(course):
             block = store.get_item(locator)
             if block.category == "vertical":
                 sequential = store.get_item(block.parent) if block.parent else None
