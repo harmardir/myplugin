@@ -1,6 +1,6 @@
 import requests
 from django.conf import settings
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse, HttpResponseServerError
 from django.shortcuts import render
 from django.views import View
 
@@ -13,23 +13,19 @@ class UnitListView(View):
             "course_id": course_id,
             "depth": "all",
             "requested_fields": "display_name,type",
-            "block_types_filter": "vertical",  # Only units
+            "block_types_filter": "vertical",
         }
         cookies = request.COOKIES
         resp = requests.get(api_url, params=params, cookies=cookies)
-        data = resp.json()
+        try:
+            data = resp.json()
+        except Exception as e:
+            # For debugging: print or log the actual error
+            error_details = f"Failed to decode JSON. Status: {resp.status_code}, Response: {resp.text}"
+            print(error_details)
+            return HttpResponseServerError(f"LMS API error: {error_details}")
         units = [
             {"id": key, "display_name": block.get("display_name", key)}
             for key, block in data.get("blocks", {}).items()
         ]
-        # Render HTML template as before
         return render(request, "myplugin/unit_list.html", {"units": units, "course_id": course_id})
-
-class UnitContentView(View):
-    def get(self, request, unit_id):
-        url = f"{LMS_BASE_URL}/xblock/{unit_id}"
-        headers = {"X-Requested-With": "XMLHttpRequest"}
-        cookies = request.COOKIES
-        params = {"view": "student"}
-        resp = requests.get(url, params=params, cookies=cookies, headers=headers)
-        return HttpResponse(resp.text)
