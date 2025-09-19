@@ -19,3 +19,13 @@ def unit_grid(request):
                 })
 
     return render(request, "myplugin/unit_grid.html", {"units": units})
+
+
+def test_template(request):
+    """
+    Simple view to test template loading.
+    """
+    context = {
+        "message": "Template is working!"
+    }
+    return render(request, "myplugin/test_template.html", context)
