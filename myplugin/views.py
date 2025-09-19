@@ -29,3 +29,9 @@ def test_template(request):
         "message": "Template is working!"
     }
     return render(request, "myplugin/test_template.html", context)
+
+
+
+def hello_world(request):
+    context = {"message": "Hello from MyPlugin (HTML)!"}
+    return render(request, "myplugin/hello.html", context)
