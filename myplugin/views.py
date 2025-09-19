@@ -2,33 +2,36 @@ from django.shortcuts import render
 from xmodule.modulestore.django import modulestore
 
 def unit_grid(request):
+    """
+    Display all vertical units for all courses as a grid.
+    Clicking a unit loads it below in an iframe.
+    """
     store = modulestore()
     units = []
 
-    # Get all courses
     courses = store.get_courses(read_only=True)
 
     for course in courses:
-        course_key = course.id  # CourseLocator
+        course_key = course.id
 
-        # ⚡ Remove 'depth' argument
-        for block_usage in store.get_items(course_key):
-            block = store.get_item(block_usage)
-
+        # ⚡ get_items() returns block objects directly in Teak
+        for block in store.get_items(course_key):
             if block.category == "vertical":
-                # Try to get parent sequential and chapter
-                sequential = store.get_item(block.parent) if block.parent else None
-                chapter = store.get_item(sequential.parent) if sequential and sequential.parent else None
+                # Traverse up to sequential and chapter
+                sequential = getattr(block, 'parent', None)
+                chapter = getattr(sequential, 'parent', None) if sequential else None
 
                 if chapter and sequential:
+                    # Build URL path for LMS courseware
                     path = f"{chapter.location}/{sequential.location}/{block.location}"
                     units.append({
                         "course": str(course_key),
-                        "name": block.display_name or "Untitled Unit",
+                        "name": getattr(block, 'display_name', 'Untitled Unit'),
                         "url": f"/courses/{str(course_key)}/courseware/{path}/"
                     })
 
     return render(request, "myplugin/unit_grid.html", {"units": units})
+
 
 
 
