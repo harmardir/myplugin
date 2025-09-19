@@ -7,8 +7,9 @@ def unit_grid(request):
     units = []
 
     for course in store.get_courses():
+        course_id = str(course.id)  # use this for URLs
         for locator in store.get_items(course.id):
-            block = store.get_item(locator)  # fetch full block
+            block = store.get_item(locator)
             if block.category == "vertical":
                 sequential = store.get_item(block.parent) if block.parent else None
                 chapter = store.get_item(sequential.parent) if sequential and sequential.parent else None
@@ -16,9 +17,9 @@ def unit_grid(request):
                 if chapter and sequential:
                     path = f"{chapter.location}/{sequential.location}/{block.location}"
                     units.append({
-                        "course": str(course.id),
+                        "course": course_id,
                         "name": block.display_name or "Untitled Unit",
-                        "url": f"/courses/{course.id}/courseware/{path}/"
+                        "url": f"/courses/{course_id}/courseware/{path}/"
                     })
 
     return render(request, "myplugin/unit_grid.html", {"units": units})
