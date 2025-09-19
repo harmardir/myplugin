@@ -1,39 +1,48 @@
+# myplugin/views.py
 from django.shortcuts import render
 from xmodule.modulestore.django import modulestore
 
 def unit_grid(request):
     """
-    Display all unit blocks (verticals) for all courses as a grid.
+    Display all unit blocks (verticals) for all courses as a grid (Teak-safe).
     """
-
     store = modulestore()
     courses = store.get_courses(read_only=True)
+
     units = []
 
-    def collect_verticals(block):
-        """
-        Recursively collect all vertical blocks (units) from a block.
-        """
-        verticals = []
-        if block.category == "vertical":
-            verticals.append(block)
-        for child in getattr(block, "children", []):
-            verticals.extend(collect_verticals(child))
-        return verticals
-
     for course in courses:
-        top_blocks = store.get_items(course.id)  # do not pass depth
-        for block in top_blocks:
-            vertical_blocks = collect_verticals(block)
-            for vb in vertical_blocks:
+        # Get top-level blocks (course tree)
+        try:
+            blocks = store.get_items(course.id)  # do not pass depth
+        except Exception as e:
+            print(f"Error loading blocks for course {course.id}: {e}")
+            continue
+
+        for b in blocks:
+            # Determine the actual block object and usage key
+            if hasattr(b, "location"):
+                block_obj = b
+                usage_key = str(b.location)
+            else:
+                # might be a locator
+                try:
+                    block_obj = store.get_item(b)
+                    usage_key = str(block_obj.location)
+                except Exception as e:
+                    print(f"Cannot get item for {b}: {e}")
+                    continue
+
+            # Only include unit/vertical blocks
+            if getattr(block_obj, "category", None) == "vertical":
                 units.append({
                     "course": str(course.id),
-                    "name": getattr(vb, "display_name", "Untitled Unit"),
-                    "unit_id": str(vb.location)
+                    "unit_id": usage_key,
+                    "display_name": getattr(block_obj, "display_name", "Untitled Unit")
                 })
 
-    print(f"Total units found: {len(units)}")  # debug
     return render(request, "myplugin/unit_grid.html", {"units": units})
+
 
 
 
