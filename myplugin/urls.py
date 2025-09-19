@@ -2,6 +2,9 @@
 from django.urls import path
 from . import views
 
+app_name = "myplugin"
+
+
 urlpatterns = [
     path("units/", views.unit_grid, name="unit_grid"),
     path("test/", views.test_template, name="test_template"),  # new test URL
