@@ -4,45 +4,31 @@ from xmodule.modulestore.django import modulestore
 
 def unit_grid(request):
     """
-    Display all unit blocks (verticals) for all courses as a grid (Teak-safe).
+    Display all unit blocks (verticals) for all courses as a grid.
+    Clicking a unit opens it in an iframe inside its parent sequence.
     """
     store = modulestore()
-    courses = store.get_courses(read_only=True)
+    all_courses = store.get_courses(read_only=True)
 
     units = []
 
-    for course in courses:
-        # Get top-level blocks (course tree)
-        try:
-            blocks = store.get_items(course.id)  # do not pass depth
-        except Exception as e:
-            print(f"Error loading blocks for course {course.id}: {e}")
-            continue
-
-        for b in blocks:
-            # Determine the actual block object and usage key
-            if hasattr(b, "location"):
-                block_obj = b
-                usage_key = str(b.location)
-            else:
-                # might be a locator
-                try:
-                    block_obj = store.get_item(b)
-                    usage_key = str(block_obj.location)
-                except Exception as e:
-                    print(f"Cannot get item for {b}: {e}")
-                    continue
-
-            # Only include unit/vertical blocks
-            if getattr(block_obj, "category", None) == "vertical":
+    for course in all_courses:
+        course_key = course.id
+        for block in store.get_items(course_key, depth=0):
+            # Only verticals
+            if block.category == "vertical":
+                # parent is sequence or chapter
+                parent = block.parent  # should exist in Teak
+                parent_id = str(parent) if parent else str(course_key)
+                
                 units.append({
-                    "course": str(course.id),
-                    "unit_id": usage_key,
-                    "display_name": getattr(block_obj, "display_name", "Untitled Unit")
+                    "course_id": str(course_key),
+                    "unit_id": str(block.location),
+                    "unit_name": block.display_name or "Untitled Unit",
+                    "parent_id": parent_id,
                 })
 
     return render(request, "myplugin/unit_grid.html", {"units": units})
-
 
 
 
