@@ -1,8 +1,7 @@
 from django.urls import path
-from . import views
-
-app_name = "myplugin"
+from .views import UnitListView, UnitContentView
 
 urlpatterns = [
-    path("courses/", views.courses_and_units_view, name="courses"),
+    path('course/<str:course_id>/units/', UnitListView.as_view(), name="unit-list"),
+    path('unit/<str:unit_id>/content/', UnitContentView.as_view(), name="unit-content"),
 ]
