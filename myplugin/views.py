@@ -3,34 +3,38 @@ from xmodule.modulestore.django import modulestore
 
 def unit_grid(request):
     """
-    Display all vertical units for all courses as a grid.
-    Clicking a unit loads it below in an iframe.
+    Display all unit blocks (verticals) for all courses as a grid.
     """
+
     store = modulestore()
+    courses = store.get_courses(read_only=True)
     units = []
 
-    courses = store.get_courses(read_only=True)
+    def collect_verticals(block):
+        """
+        Recursively collect all vertical blocks (units) from a block.
+        """
+        verticals = []
+        if block.category == "vertical":
+            verticals.append(block)
+        for child in getattr(block, "children", []):
+            verticals.extend(collect_verticals(child))
+        return verticals
 
     for course in courses:
-        course_key = course.id
+        top_blocks = store.get_items(course.id)  # do not pass depth
+        for block in top_blocks:
+            vertical_blocks = collect_verticals(block)
+            for vb in vertical_blocks:
+                units.append({
+                    "course": str(course.id),
+                    "name": getattr(vb, "display_name", "Untitled Unit"),
+                    "unit_id": str(vb.location)
+                })
 
-        # ⚡ get_items() returns block objects directly in Teak
-        for block in store.get_items(course_key):
-            if block.category == "vertical":
-                # Traverse up to sequential and chapter
-                sequential = getattr(block, 'parent', None)
-                chapter = getattr(sequential, 'parent', None) if sequential else None
-
-                if chapter and sequential:
-                    # Build URL path for LMS courseware
-                    path = f"{chapter.location}/{sequential.location}/{block.location}"
-                    units.append({
-                        "course": str(course_key),
-                        "name": getattr(block, 'display_name', 'Untitled Unit'),
-                        "url": f"/courses/{str(course_key)}/courseware/{path}/"
-                    })
-
+    print(f"Total units found: {len(units)}")  # debug
     return render(request, "myplugin/unit_grid.html", {"units": units})
+
 
 
 
