@@ -8,7 +8,7 @@ def unit_grid(request):
     # get_courses returns CourseBlockWithMixins
     for course in store.get_courses(read_only=True):
         # ⚡ Use course.id (CourseLocator) instead of course.course_key
-        course_key = course.id
+        course_key = course.id  # Corrected line
 
         for locator in store.get_items(course_key):
             block = store.get_item(locator)
