@@ -1,16 +1,18 @@
 from django.shortcuts import render
+from django.shortcuts import render
 from xmodule.modulestore.django import modulestore
-from urllib.parse import quote
 
 def unit_grid(request):
     store = modulestore()
     units = []
 
     for course in store.get_courses():
-        for block in store.get_items(course.id):
-            if block.location.category == "vertical":
-                sequential = block.parent
-                chapter = sequential.parent if sequential else None
+        for locator in store.get_items(course.id):
+            block = store.get_item(locator)  # fetch full block
+            if block.category == "vertical":
+                sequential = store.get_item(block.parent) if block.parent else None
+                chapter = store.get_item(sequential.parent) if sequential and sequential.parent else None
+
                 if chapter and sequential:
                     path = f"{chapter.location}/{sequential.location}/{block.location}"
                     units.append({
